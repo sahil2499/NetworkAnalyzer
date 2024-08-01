@@ -17,7 +17,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
-import subprocess
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +29,6 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 import warnings
 import subprocess
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tkinter as tk
@@ -46,6 +44,7 @@ prev_src_ip = None
 prev_dest_ip = None
 prev_src_port = None
 prev_dest_port = None
+
 def process_packet(packet):
     global previous_timestamp, connection_data, urgent_packets_count
     global processed_data
@@ -240,7 +239,7 @@ def get_service_from_nmap(packet):
                 protocol = 'UDP'
     
     try:
-        command = ["sudo", "nmap", "-sV", "-p", str(dest_port), "localhost"]
+        command = ["sudo", "nmap", "-sV", "-p", str(dest_port), dest_ip]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
 
@@ -361,40 +360,6 @@ def count_recent_connections(current_packet):
     return count
 
 recent_service_connections = deque()
-#24
-# def count_recent_connections_service(packet):
-#     if 'TCP' in packet:
-#                 src_port = int(packet.tcp.srcport)
-#                 dest_port = int(packet.tcp.dstport)
-#                 protocol = 'TCP'
-#                 service = get_service_from_nmap(packet)
-#     elif 'UDP' in packet:
-#                 src_port = int(packet.udp.srcport)
-#                 dest_port = int(packet.udp.dstport)
-#                 protocol = 'UDP'
-#                 service = get_service_from_nmap(packet)
-  
-#     global recent_service_connections
-
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     current_dest_ip = packet.ip.dst
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-#     current_service = service
-
-#     # Add the current packet's service and timestamp to the list
-#     if [dest_port, seconds_since_midnight] not in recent_service_connections:
-#         recent_service_connections.append([dest_port, seconds_since_midnight,current_dest_ip])
-#     #print(recent_service_connections)
-#     # Remove connections that are older than TTL_SECONDS
-#     recent_service_connections = [conn for conn in recent_service_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-
-
-#     # Count the number of connections with the same service
-#     count = sum(1 for desPort, _,_ in recent_service_connections if desPort == dest_port)
-
-#     return count
-
 
 
 def count_recent_connections_service(packet):
@@ -440,14 +405,7 @@ def count_recent_flag_connections(packet,count1):
 
     current_dest_ip = packet.ip.dst
 
-    # Add the current packet's destination IP and timestamp to the list
     
-    
-    # Remove connections that are older than 2 seconds
-    #recent_connections = [conn for conn in recent_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-    
-    
-    # Count the number of connections to the same destination host
     count=0
     for i in range(len(recent_connections)):
          
@@ -481,15 +439,6 @@ def count_recent_service_connection(packet,srv_count):
     
     
 
-    # Add the current packet's destination IP and timestamp to the list
-    
-    
-    # Remove connections that are older than 2 seconds
-    #recent_service_connections = [conn for conn in recent_service_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-    
-    
-    
-    # Count the number of connections to the same destination host
     count=0
     for i in range(len(recent_service_connections)):
          
@@ -529,7 +478,6 @@ def count_recent_REJflag_connections(packet,count2):
                 count=count+1
         
 
-        #count = sum(1 for dest_ip, _ in recent_connections if (dest_ip == current_dest_ip and monitor_connection(packet.ip.dst,dest_port) in {'REJ'}) )
         
         percentage=count/totalCount
         
@@ -918,18 +866,7 @@ def calculate_dst_to_src_bytes(packet):
         prev_src_port == current_dest_port and prev_dest_port == current_src_port):
        
         return packet.length
-        # if 'IP' in packet:
-        #     ip_header_length = int(packet.ip.hdr_len) * 4
-        # if 'TCP' in packet:
-        #     tcp_header_length = int(packet.tcp.hdr_len) * 4
-        #     total_length = int(packet.ip.len)
-        #     payload_length = total_length - ip_header_length - tcp_header_length
-        #     return max(payload_length, 0)
-        # elif 'UDP' in packet:
-        #     udp_header_length = 8
-        #     total_length = int(packet.ip.len)
-        #     payload_length = total_length - ip_header_length - udp_header_length
-        #     return max(payload_length, 0)
+       
 
     prev_src_ip = current_src_ip
     prev_dest_ip = current_dest_ip
@@ -976,889 +913,6 @@ def analyze_packet(packet):
 
 
 
-
-
-
-
-
-
-# def get_service_from_nmap(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-            
-#             if 'TCP' in packet:
-#                 src_port = int(packet.tcp.srcport)
-#                 dest_port = int(packet.tcp.dstport)
-#                 protocol = 'TCP'
-                
-#             elif 'UDP' in packet:
-#                 src_port = int(packet.udp.srcport)
-#                 dest_port = int(packet.udp.dstport)
-#                 protocol = 'UDP'
-    
-#     try:
-#         command = ["sudo", "nmap", "-sV", "-p", str(dest_port), "localhost"]
-#         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#         stdout, stderr = process.communicate()
-
-#         if stderr:
-#             return "Error executing nmap command:\n" + stderr.decode()
-#         else:
-#             lines = stdout.decode().splitlines()
-#             for line in lines:
-#                 if "/tcp" in line or "/udp" in line:
-#                     service = line.split()[2]
-#                     return service
-#         return None
-#     except Exception as e:
-#         return "An error occurred: " + str(e)
-
-# def calculate_packet_duration(prev_packet_time, current_packet_time):
-#     if prev_packet_time is None:
-#         return None
-#     else:
-#         return (current_packet_time - prev_packet_time).total_seconds()
-
-# def monitor_connection(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-            
-#             if 'TCP' in packet:
-#                 src_port = int(packet.tcp.srcport)
-#                 dest_port = int(packet.tcp.dstport)
-#                 protocol = 'TCP'
-                
-#             elif 'UDP' in packet:
-#                 src_port = int(packet.udp.srcport)
-#                 dest_port = int(packet.udp.dstport)
-#                 protocol = 'UDP'
-    
-#     try:
-#         nmap_command = ["nmap", "-p", str(dest_port), "--unprivileged", dest_ip]
-#         nmap_output = subprocess.check_output(nmap_command, stderr=subprocess.STDOUT, universal_newlines=True)
-
-#         if "open" in nmap_output:
-#             return "SF"
-#         elif "closed" in nmap_output:
-#             return "S0"
-#         else:
-#             return "REJ"
-#     except subprocess.CalledProcessError as e:
-#         return f"An error occurred: {e}"
-
-# TTL_SECONDS = 2
-
-
-
-
-
-
-# def calculate_payload_length(packet):
-#     if 'IP' in packet:
-#         ip_header_length = int(packet.ip.hdr_len) * 4
-#         if 'TCP' in packet:
-#             tcp_header_length = int(packet.tcp.hdr_len) * 4
-#             total_length = int(packet.ip.len)
-#             payload_length = total_length - ip_header_length - tcp_header_length
-#             return max(payload_length, 0)
-#         elif 'UDP' in packet:
-#             udp_header_length = 8
-#             total_length = int(packet.ip.len)
-#             payload_length = total_length - ip_header_length - udp_header_length
-#             return max(payload_length, 0)
-#     return 0
-
-# # Global variable to store recent connections
-# recent_connections = []
-
-# # Your existing functions...
-# #23
-# TTL_SECONDS = 2
-# def count_recent_connections(current_packet):
-#     if 'IP' in current_packet:
-#             src_ip = current_packet.ip.src
-#             dest_ip = current_packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in current_packet:
-#                     src_port = int(current_packet.tcp.srcport)
-#                     dest_port = int(current_packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(current_packet)
-#             elif 'UDP' in current_packet:
-#                     src_port = int(current_packet.udp.srcport)
-#                     dest_port = int(current_packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(current_packet)
-   
-   
-#     global recent_connections
-
-#     current_time = datetime.now()
-    
-#     current_time_only = current_time.time()
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-    
-    
-#     current_dest_ip = current_packet.ip.dst
-    
-#     # Add the current packet's destination IP and timestamp to the list
-#     if [current_dest_ip, seconds_since_midnight] not in recent_connections:
-#         recent_connections.append([current_dest_ip, seconds_since_midnight,dest_port])
-    
-#     # Remove connections that are older than TTL_SECONDS
-#     recent_connections = [conn for conn in recent_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-#     #print(recent_connections)
-#     # Count the number of connections to the same destination host
-#     count = sum(1 for conn in recent_connections if conn[0] == current_dest_ip)
-
-#     return count
-
-# recent_service_connections = []
-# #24
-# def count_recent_connections_service(packet):
-#     if 'TCP' in packet:
-#                 src_port = int(packet.tcp.srcport)
-#                 dest_port = int(packet.tcp.dstport)
-#                 protocol = 'TCP'
-#                 service = get_service_from_nmap(packet)
-#     elif 'UDP' in packet:
-#                 src_port = int(packet.udp.srcport)
-#                 dest_port = int(packet.udp.dstport)
-#                 protocol = 'UDP'
-#                 service = get_service_from_nmap(packet)
-  
-#     global recent_service_connections
-
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     current_dest_ip = packet.ip.dst
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-    
-
-#     # Add the current packet's service and timestamp to the list
-#     if [dest_port, seconds_since_midnight] not in recent_service_connections:
-#         recent_service_connections.append([dest_port, seconds_since_midnight,current_dest_ip])
-#     #print(recent_service_connections)
-#     # Remove connections that are older than TTL_SECONDS
-#     recent_service_connections = [conn for conn in recent_service_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-
-
-#     # Count the number of connections with the same service
-#     count = sum(1 for desPort, _,_ in recent_service_connections if desPort == dest_port)
-
-#     return count
-
-
-# #25
-# def count_recent_flag_connections(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#     global recent_connections
-    
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-
-#     current_dest_ip = packet.ip.dst
-
-#     # Add the current packet's destination IP and timestamp to the list
-    
-    
-#     # Remove connections that are older than 2 seconds
-#     #recent_connections = [conn for conn in recent_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-    
-    
-#     # Count the number of connections to the same destination host
-#     count=0
-#     for i in range(len(recent_connections)):
-         
-#          if (str(recent_connections[i][0]) == str(current_dest_ip) and monitor_connection(packet) in {'S0'}):
-              
-#               count=count+1
-    
-#     totalCount=count_recent_connections(packet)
-#     #print(count)
-#     percentage=count/totalCount
-#     return percentage
-
-# #26
-# def count_recent_service_connection(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#     global recent_service_connections
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     current_dest_ip = packet.ip.dst
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-
-#     # Add the current packet's destination IP and timestamp to the list
-    
-    
-#     # Remove connections that are older than 2 seconds
-#     #recent_service_connections = [conn for conn in recent_service_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-    
-    
-    
-#     # Count the number of connections to the same destination host
-#     count=0
-#     for i in range(len(recent_service_connections)):
-         
-#          if (str(recent_service_connections[i][0]) == str(dest_port) and monitor_connection(packet) in {'S0','SF'}):
-              
-#               count=count+1
-#     totalCount=count_recent_connections_service(packet)
-    
-#     percentage=count/totalCount
-    
-#     return percentage
-# #27
-# def count_recent_REJflag_connections(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#     global recent_connections
-#     totalCount=count_recent_connections(packet)
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-
-
-#     current_dest_ip = packet.ip.dst
-
-#     # Add the current packet's destination IP and timestamp to the list
-    
-
-#     # Remove connections that are older than 2 seconds
-#     #recent_connections = [conn for conn in recent_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-
-#     # Count the number of connections to the same destination host
-    
-#     count=0
-#     for i in range(len(recent_connections)):
-         
-#          if (str(recent_connections[i][0]) == str(current_dest_ip) and monitor_connection(packet) in {'REJ'}):
-              
-#               count=count+1
-    
-
-#     #count = sum(1 for dest_ip, _ in recent_connections if (dest_ip == current_dest_ip and monitor_connection(packet.ip.dst,dest_port) in {'REJ'}) )
-    
-#     percentage=count/totalCount
-    
-#     return percentage
-# #28
-# def count_recent_REJflag_service_connections(packet):
-#     if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#     global recent_service_connections
-    
-#     current_time = datetime.now()
-#     current_time_only = current_time.time()
-#     seconds_since_midnight = current_time_only.hour * 3600 + current_time_only.minute * 60 + current_time_only.second
-
-
-#     current_dest_ip = packet.ip.dst
-
-#     # Add the current packet's destination IP and timestamp to the list
-    
-
-#     # Remove connections that are older than 2 seconds
-#     #recent_service_connections = [conn for conn in recent_service_connections if (seconds_since_midnight - conn[1]) <= TTL_SECONDS]
-
-#     # Count the number of connections to the same destination host
-    
-#     count=0
-#     for i in range(len(recent_service_connections)):
-         
-#          if (str(recent_service_connections[i][0]) == str(dest_port) and monitor_connection(packet) in {'REJ'}):
-              
-#               count=count+1
-    
-
-#     #count = sum(1 for dest_ip, _ in recent_connections if (dest_ip == current_dest_ip and monitor_connection(packet.ip.dst,dest_port) in {'REJ'}) )
-    
-    
-   
-#     totalCount=count_recent_connections_service(packet)
-    
-#     percentage=count/totalCount
-    
-#     return percentage
-# #29
-# def calculate_samesrv_rate(packet):
-#      if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#      global recent_connections
-#      currDestIp=dest_ip
-#      currService=service
-#      totalCount=1
-#      serviceCount=0
-#      newrs=[]
-     
-#      for i in recent_connections:
-#           if i[0]==currDestIp:
-#                newrs.append(i)
-#                totalCount=totalCount+1
-#      #print("this is newrs",newrs)
-#      for i in newrs:
-#           if i[2]==dest_port:
-#                serviceCount=serviceCount+1
-     
-#      return serviceCount/len(newrs)
-# #30
-# def calculate_Diff_srv_rate_rate(packet):
-#      if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#      global recent_connections
-#      currDestIp=dest_ip
-#      currService=service
-#      totalCount=1
-#      serviceCount=0
-#      newrs=[]
-     
-#      for i in recent_connections:
-#           if i[0]==currDestIp:
-#                newrs.append(i)
-#                totalCount=totalCount+1
-#      #print("this is newrs",newrs)
-#      for i in newrs:
-#           if i[2]!=dest_port:
-#                serviceCount=serviceCount+1
-     
-#      return serviceCount/len(newrs)
-
-# #31
-# def calculate_Srv_diff_host_rate(packet):
-#      if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-   
-#      global recent_service_connections
-#      currDestIp=dest_ip
-#      currService=service
-#      totalCount=1
-#      serviceCount=0
-#      newrs=[]
-     
-#      for i in recent_connections:
-#           if i[0]==dest_port:
-#                newrs.append(i)
-#                totalCount=totalCount+1
-#      #print("this is newrs",newrs)
-#      for i in newrs:
-#           if i[2]!=dest_ip:
-#                serviceCount=serviceCount+1
-#     #  print(serviceCount)
-     
-#     #  print(serviceCount/len(newrs))
-#      if len(newrs)==0:
-#           return 0
-#      return serviceCount/len(newrs)
-
-# #32
-# destinationHotAddress={}
-# def calculate_destination_host_sameIP(packet):
-#      if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-            
-#      global destinationHotAddress 
-#      currDestAddress=packet.ip.dst
-#      if currDestAddress in destinationHotAddress:
-#           destinationHotAddress[currDestAddress]=[destinationHotAddress[currDestAddress][0]+1,service,flag]
-#      else:
-#           destinationHotAddress[currDestAddress]=[1,service,flag]
-     
-#      return destinationHotAddress[currDestAddress][0]
-
-# #33
-# destinationserviceAddress={}
-# def calculate_destination_host_samePort(packet):
-#      if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#      global destinationserviceAddress 
-     
-#      if dest_port in destinationserviceAddress:
-#           destinationserviceAddress[dest_port]=[destinationserviceAddress[dest_port][0]+1,src_port,dest_ip,flag]
-     
-#      else:
-#           destinationserviceAddress[dest_port]=[1,src_port,dest_ip,flag]
-     
-#      return destinationserviceAddress[dest_port][0]
-
-# #34
-# def calculate_Dst_host_same_srv_rate(packet):
-#            if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#             global destinationHotAddress
-#             currIp=dest_ip
-#             if currIp in destinationHotAddress:
-#                   checkservice=destinationHotAddress[currIp][1]
-#             else:
-#                   return 1
-#             count=0
-#             tc=calculate_destination_host_sameIP(packet)
-#             for i in destinationHotAddress:
-#                   if i==currIp and destinationHotAddress[i][1]==checkservice:
-#                         count+=1
-#             return count/tc
-# #35          
-# def calculate_Dst_host_diff_srv_rate(packet):
-#            if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#             global destinationHotAddress
-#             currIp=dest_ip
-#             if currIp in destinationHotAddress:
-#                   checkservice=destinationHotAddress[currIp][1]
-#             else:
-#                   return 0
-#             count=0
-#             tc=calculate_destination_host_sameIP(packet)
-#             for i in destinationHotAddress:
-#                   if i== currIp and destinationHotAddress[i][1]!=checkservice:
-#                         count+=1
-#             return count/tc
-# #36
-# def calculate_Dst_host_same_src_port_rate(packet):
-#       if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#             global destinationserviceAddress
-            
-#             if dest_port in destinationserviceAddress:
-#                   sourceport=destinationserviceAddress[dest_port][1]
-#             else:
-#                   return 0
-#             count=0
-#             tc=calculate_destination_host_samePort(packet)
-#             for i in destinationserviceAddress:
-#                   if i== dest_port and destinationserviceAddress[i][1]==sourceport:
-#                         count+=1
-#             return round(count/tc,2)
-      
-# #37
-# def calculate_Dst_host_srv_diff_host_rate(packet):
-#       if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#             global destinationserviceAddress
-            
-#             if dest_port in destinationserviceAddress:
-#                   destinatioip=destinationserviceAddress[dest_port][2]
-#             else:
-#                   return 0
-#             count=0
-#             tc=calculate_destination_host_samePort(packet)
-#             for i in destinationserviceAddress:
-#                   if i== dest_port and destinationserviceAddress[i][2]!=destinatioip:
-#                         count+=1
-#             return round(count/tc,2)
-# #38   
-# def calculate_Dst_host_serro_r_rate(packet):
-#       if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             global destinationHotAddress
-#             currIp=dest_ip
-            
-            
-#             count=0
-#             tc=calculate_destination_host_sameIP(packet)
-#             for i in destinationHotAddress:
-#                   if i==currIp and destinationHotAddress[i][2]=='S0':
-#                         count+=1
-#             return round(count/tc,2)
-             
-
-# #39
-# def calculate_Dst_host_srv_s_error_rate(packet):
-#             if 'IP' in packet:
-#                 src_ip = packet.ip.src
-#                 dest_ip = packet.ip.dst
-#                 protocol = 'unknown'
-#                 service = 'unknown'
-#                 src_port = None
-#                 dest_port = None
-#                 if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#                 elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             global destinationserviceAddress
-#             currIp=dest_ip
-            
-            
-#             count=0
-#             tc=calculate_destination_host_samePort(packet)
-#             for i in destinationserviceAddress:
-#                   if i==dest_port and destinationserviceAddress[i][3]=='S0':
-#                         count+=1
-#             return round(count/tc,2)
-      
-# #40
-# def calculate_Dst_host_rerro_r_rate(packet):
-#       if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             currIp=dest_ip
-            
-            
-#             count=0
-#             tc=calculate_destination_host_sameIP(packet)
-#             for i in destinationHotAddress:
-#                   if i==currIp and destinationHotAddress[i][2]=='REJ':
-#                         count+=1
-#             return round(count/tc,2)
-             
-# #41
-# def calculate_Dst_host_srv_r_error_rate(packet):
-#       if 'IP' in packet:
-#             src_ip = packet.ip.src
-#             dest_ip = packet.ip.dst
-#             protocol = 'unknown'
-#             service = 'unknown'
-#             src_port = None
-#             dest_port = None
-#             if 'TCP' in packet:
-#                     src_port = int(packet.tcp.srcport)
-#                     dest_port = int(packet.tcp.dstport)
-#                     protocol = 'TCP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             elif 'UDP' in packet:
-#                     src_port = int(packet.udp.srcport)
-#                     dest_port = int(packet.udp.dstport)
-#                     protocol = 'UDP'
-#                     service = get_service_from_nmap(packet)
-#                     flag=monitor_connection(packet)
-#             global destinationHotAddress
-#             currIp=dest_ip
-            
-            
-#             count=0
-#             tc=calculate_destination_host_sameIP(packet)
-#             for i in destinationHotAddress:
-#                   if i==currIp and destinationHotAddress[i][2]=='REJ':
-#                         count+=1
-#             return round(count/tc,2)
-             
-
-     
-
-# def calculate_dst_to_src_bytes(packet):
-#     global prev_src_ip, prev_dest_ip, prev_src_port, prev_dest_port
-    
-#     current_src_ip = packet.ip.src
-#     current_dest_ip = packet.ip.dst
-#     current_src_port = int(packet[packet.transport_layer].srcport)
-#     current_dest_port = int(packet[packet.transport_layer].dstport)
-    
-#     dst_to_src_bytes = 0
-
-#     if (prev_src_ip == current_dest_ip and prev_dest_ip == current_src_ip and
-#         prev_src_port == current_dest_port and prev_dest_port == current_src_port):
-       
-#         return packet.length
-#         # if 'IP' in packet:
-#         #     ip_header_length = int(packet.ip.hdr_len) * 4
-#         # if 'TCP' in packet:
-#         #     tcp_header_length = int(packet.tcp.hdr_len) * 4
-#         #     total_length = int(packet.ip.len)
-#         #     payload_length = total_length - ip_header_length - tcp_header_length
-#         #     return max(payload_length, 0)
-#         # elif 'UDP' in packet:
-#         #     udp_header_length = 8
-#         #     total_length = int(packet.ip.len)
-#         #     payload_length = total_length - ip_header_length - udp_header_length
-#         #     return max(payload_length, 0)
-
-#     prev_src_ip = current_src_ip
-#     prev_dest_ip = current_dest_ip
-#     prev_src_port = current_src_port
-#     prev_dest_port = current_dest_port
-
-#     return dst_to_src_bytes
-
-
-
-
-# def analyze_packet(packet):
-#     login_status = 0
-    
-#     if 'TCP' in packet and hasattr(packet, 'tcp') and hasattr(packet, 'data'):
-#         payload = bytes(packet.data).decode('utf-8', errors='ignore')
-#         login_keywords = ["login", "username", "user", "signin", "password", "pass", "pwd", "authenticate"]
-#         success_keywords = ["200 OK", "welcome", "logged in", "success", "authenticated", "authorized"]
-        
-#         if "HTTP" in payload:
-#             if any(keyword in payload.lower() for keyword in login_keywords):
-#                 login_status = 1
-#             elif any(keyword in payload for keyword in success_keywords):
-#                 login_status = 1
-        
-#         elif packet.tcp.dstport == 443 or packet.tcp.srcport == 443:
-#             if any(keyword in payload.lower() for keyword in login_keywords):
-#                 login_status = 1
-#             elif any(keyword in payload.lower() for keyword in success_keywords):
-#                 login_status = 1
-    
-#     return login_status
-
-
-
-#######################################################################
 
 
 
@@ -2360,18 +1414,7 @@ def extract_destination_bytes(packet):
         prev_src_port == current_dest_port and prev_dest_port == current_src_port):
         
         return packet.length
-        # if 'IP' in packet:
-        #     ip_header_length = int(packet.ip.hdr_len) * 4
-        # if 'TCP' in packet:
-        #     tcp_header_length = int(packet.tcp.hdr_len) * 4
-        #     total_length = int(packet.ip.len)
-        #     payload_length = total_length - ip_header_length - tcp_header_length
-        #     return max(payload_length, 0)
-        # elif 'UDP' in packet:
-        #     udp_header_length = 8
-        #     total_length = int(packet.ip.len)
-        #     payload_length = total_length - ip_header_length - udp_header_length
-        #     return max(payload_length, 0)
+        
 
     prev_src_ip = current_src_ip
     prev_dest_ip = current_dest_ip
@@ -2493,31 +1536,7 @@ def get_icmp_type(type_hex):
     return type_names.get(type_hex, type_hex)
 
 
-#Start capturing packets in real-time (you might need administrative privileges)
-# def capture_and_process(interface='en0'):
-#     # Create a LiveCapture object to continuously capture packets
-#    def process_packet(packet):
-#     # Placeholder for actual packet processing logic
-#     # Return a dictionary with processed packet data
-#     return {
-#         'duration': 0, 'protocol_type': 'icmp', 'service': 'eco_i', 'flag': 'SF', 'src_bytes': 8, 'dst_bytes': 0,
-#         'land': 0, 'wrong_fragment': 0, 'urgent': 0, 'hot': 0, 'num_failed_logins': 0, 'logged_in': 0,
-#         'num_compromised': 0, 'root_shell': 0, 'su_attempted': 0, 'num_root': 0, 'num_file_creations': 0,
-#         'num_shells': 0, 'num_access_files': 0, 'num_outbound_cmds': 0, 'is_host_login': 0, 'is_guest_login': 0,
-#         'count': 1, 'srv_count': 44, 'serror_rate': 0.0, 'srv_serror_rate': 0.0, 'rerror_rate': 0.0, 'srv_rerror_rate': 0.0,
-#         'same_srv_rate': 1, 'diff_srv_rate': 0, 'srv_diff_host_rate': 1, 'dst_host_count': 1, 'dst_host_srv_count': 95,
-#         'dst_host_same_srv_rate': 1, 'dst_host_diff_srv_rate': 0.0, 'dst_host_same_src_port_rate': 1, 'dst_host_srv_diff_host_rate': 0.51,
-#         'dst_host_serror_rate': 0.0, 'dst_host_srv_serror_rate': 0.0, 'dst_host_rerror_rate': 0.0, 'dst_host_srv_rerror_rate': 0.0,
-#         'attack': 'normal', "last_flag": 21
-#     }
 
-# def block_ip(ip_address):
-#     try:
-#         subprocess.run(['sudo', 'pfctl', '-e', 'block', 'in', 'from', ip_address], check=True)
-#         print(f"Blocked IP address {ip_address}")
-#     except subprocess.CalledProcessError as e:
-#         print(f"Error blocking IP address {ip_address}: {e}")
- # Initially, capture is active
 capture_active = threading.Event()
 def capture_and_process(interface='en0'):
     global capture_active
@@ -2584,8 +1603,10 @@ def capture_and_process(interface='en0'):
             sample_df = sample_df[X.columns]
 
             new_sample_scaled = scaler.transform(sample_df)
+            print(new_sample_scaled)
             new_sample_pred = model.predict(new_sample_scaled)
             new_sample_pred_label = le_attack.inverse_transform(new_sample_pred)
+
              # Display the prediction for the packet
             text_widget.insert(tk.END, f"Prediction for the new incoming packet: {new_sample_pred_label[0]}\n")
             #text_widget.insert(tk.END, f"Packet Information: {packet}\n")
@@ -2594,33 +1615,53 @@ def capture_and_process(interface='en0'):
 
 
             print("Prediction for the new incoming tcp/udp packet :", new_sample_pred_label[0])
-            if new_sample_pred_label[0] !="normal":
-                text_widget.insert(tk.END, f"Capture Packet Information Possible Malcious click to block IP address : \n {packet}")
+            if new_sample_pred_label[0] != "normal":
+                text_widget.insert(tk.END, f"Capture Packet Information Possible Malicious click to block IP address : \n {packet}")
+
+    # Disable network interface to stop packet capture
+                interface = 'en0'  
+                disable_interface(interface)
 
                 decision = messagebox.askyesno("Block IP", f"Block IP address and stop capturing packets?\n\n Check Packet in the display:")
-                
+
                 if decision:
-                        ip_address = data.get('src_ip', 'Unknown')
-                        block_ip(ip_address)
-                        capture_active.clear()
-                        break
+                    ip_address = data.get('src_ip', 'Unknown')
+                    block_ip(ip_address)
+        # Optionally, stop capturing packets here
+                    #capture_active.clear()  # Assuming this stops packet capture
+                else:
+        # Unblock the IP address if decision is not to block
+                    ip_address = data.get('src_ip', 'Unknown')
+                    #unblock_ip(ip_address)
+
+    # Enable the network interface after making the decision
+                enable_interface(interface)
+
                 print("Packet possible malicious:")
                 print("Packet Information:", packet)
-                #display_packet_info("Packet possible malicious:\n")
-                #display_packet_info(f"Packet Information: {packet}\n")
-                #decision = input("Block IP address and stop capturing packets? (yes/no): ").lower()
-                # if decision == 'yes':
-                #     ip_address = data.get('src_ip', 'Unknown')
-                #     block_ip(ip_address)
-                #     break
-        
+
+                
 def block_ip(ip_address):
     try:
         subprocess.run(['sudo', 'pfctl', '-e', 'block', 'in', 'from', ip_address], check=True)
         print(f"Blocked IP address {ip_address}")
     except subprocess.CalledProcessError as e:
         print(f"Error blocking IP address {ip_address}: {e}")
+def disable_interface(interface):
+    try:
+        # Disable the network interface
+        subprocess.run(['sudo', 'ifconfig', interface, 'down'], check=True)
+        print(f"Disabled interface {interface}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error disabling interface {interface}: {e}")
 
+def enable_interface(interface):
+    try:
+        # Enable the network interface
+        subprocess.run(['sudo', 'ifconfig', interface, 'up'], check=True)
+        print(f"Enabled interface {interface}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error enabling interface {interface}: {e}")
 
 def display_packet_info(self, message):
         self.text_widget.insert(tk.END, message)
@@ -2661,134 +1702,4 @@ def create_gui():
 
 # Start the GUI
 create_gui()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Define the process_packet function or remove its reference if not needed
-# def process_packet(packet):
-#     # Placeholder for actual packet processing logic
-#     pass
-
-# def capture_and_process(interface='en0'):
-#     # Load and preprocess the dataset
-#     columns = ["duration", "protocol", "service", "flag", "src_bytes", "dst_bytes", "land",
-#                "wrong_fragment", "urgent", "hot", "num_failed_logins", "logged_in",
-#                "num_compromised", "root_shell", "su_attempted", "num_root", "num_file_creations",
-#                "num_shells", "num_access_files", "num_outbound_cmds", "is_host_login",
-#                "is_guest_login", "count", "srv_count", "serror_rate", "srv_serror_rate",
-#                "rerror_rate", "srv_rerror_rate", "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
-#                "dst_host_count", "dst_host_srv_count", "dst_host_same_srv_rate",
-#                "dst_host_diff_srv_rate", "dst_host_same_src_port_rate",
-#                "dst_host_srv_diff_host_rate", "dst_host_serror_rate", "dst_host_srv_serror_rate",
-#                "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "attack", "last_flag"]
-
-#     dataset_path = 'train.csv'  # Provide the correct path to your dataset file
-#     df = pd.read_csv(dataset_path, names=columns)
-
-#     # Preprocess the dataset
-#     df.drop(['land', 'urgent', 'num_failed_logins', 'num_outbound_cmds'], axis=1, inplace=True)
-#     df.fillna(0, inplace=True)
-
-#     le_protocol = LabelEncoder()
-#     df['protocol'] = le_protocol.fit_transform(df['protocol'])
-
-#     le_service = LabelEncoder()
-#     df['service'] = le_service.fit_transform(df['service'])
-
-#     le_flag = LabelEncoder()
-#     df['flag'] = le_flag.fit_transform(df['flag'])
-
-#     le_attack = LabelEncoder()
-#     df['attack'] = le_attack.fit_transform(df['attack'])
-
-#     X = df.drop(['attack', 'last_flag'], axis=1)
-#     y = df['attack']
-
-#     scaler = StandardScaler()
-#     X_scaled = scaler.fit_transform(X)
-
-#     # RandomForest without hyperparameter tuning
-#     rf = RandomForestClassifier(random_state=42)
-#     rf.fit(X_scaled, y)
-
-#     model = rf
-
-#     capture = pyshark.LiveCapture(interface=interface)
-
-#     # ThreadPoolExecutor for asynchronous processing
-#     executor = ThreadPoolExecutor(max_workers=5)
-#     futures = []
-
-#     def process_and_predict(packet):
-#         data = process_packet(packet)
-#         if data is not None:
-#             sample_df = pd.DataFrame([data])
-#             sample_df['protocol'] = le_protocol.transform(sample_df['protocol'].apply(lambda x: x if x in le_protocol.classes_ else 'other'))
-#             sample_df['service'] = le_service.transform(sample_df['service'].apply(lambda x: x if x in le_service.classes_ else 'other'))
-#             sample_df['flag'] = le_flag.transform(sample_df['flag'].apply(lambda x: x if x in le_flag.classes_ else 'other'))
-
-#             sample_df.drop(['land', 'urgent', 'num_failed_logins', 'num_outbound_cmds'], axis=1, inplace=True)
-#             sample_df = sample_df[X.columns]
-
-#             new_sample_scaled = scaler.transform(sample_df)
-#             new_sample_pred = model.predict(new_sample_scaled)
-#             new_sample_pred_label = le_attack.inverse_transform(new_sample_pred)
-
-#             print("Prediction for the new incoming tcp/udp packet :", new_sample_pred_label[0])
-#             if new_sample_pred_label == 1:
-#                 print("Packet possible malicious:")
-#                 print("Packet Information:", packet)
-#                 decision = input("Block IP address and stop capturing packets? (yes/no): ").lower()
-#                 if decision == 'yes':
-#                     ip_address = data.get('src_ip', 'Unknown')
-#                     block_ip(ip_address)
-#                     return True
-#         return False
-
-#     for packet in capture.sniff_continuously():
-#         if any(key in packet for key in ["Layer TLS", "Layer SSL", "Layer HTTPS"]):
-#             print("Encrypted Packet:")
-#             continue
-#         futures.append(executor.submit(process_and_predict, packet))
-
-#     # Handle the results of the futures
-#     for future in as_completed(futures):
-#         if future.result():
-#             break
-
-# def start_capture():
-#     # Use threading to prevent blocking the main thread
-#     threading.Thread(target=capture_and_process).start()
-
-# def create_gui():
-#     root = tk.Tk()
-#     root.title("Packet Capture GUI")
-
-#     frame = tk.Frame(root)
-#     frame.pack(padx=10, pady=10)
-
-#     start_button = tk.Button(frame, text="Start Packet Capture", command=start_capture)
-#     start_button.pack(pady=10)
-
-#     exit_button = tk.Button(frame, text="Exit", command=root.quit)
-#     exit_button.pack(pady=10)
-
-#     root.mainloop()
-
-# if __name__ == "__main__":
-#     create_gui()
 
